@@ -33,25 +33,39 @@ print_usage() {
 }
 
 pack_and_slice() {
-  local src_dir="$1"
+  local full_path="$1"
   local slice_size="${2:-1024m}"
-  local out_prefix="${3:-archive.tar.xz.part.}"
+  local out_prefix="${3:-archive.part.}"
 
-  if [[ ! -d "$src_dir" ]]; then
-    log_error "Каталог '$src_dir' не найден"
+  if [[ ! -d "$full_path" ]]; then
+    log_error "Каталог '$full_path' не найден"
     return 1
   fi
 
-  log_info "Упаковка '${src_dir}' и нарезка по ${slice_size}..."
-  tar -c "$src_dir" | xz -c | split -b "$slice_size" - "$out_prefix"
+  local dirname="$(basename "$full_path")"
+  local parentdir="$(dirname "$full_path")"
+  local outdir="$(pwd)"  # каталог, откуда запускается скрипт
+
+  log_info "Упаковка '${dirname}' с нарезкой по ${slice_size}, префикс: ${out_prefix}"
+
+  (
+    cd "$parentdir" || exit 1
+    tar -c "$dirname" | xz -c | split -b "$slice_size" \
+      --suffix-length=6 --numeric-suffixes=0 \
+      - "${outdir}/${out_prefix}"
+  )
 
   if [[ $? -eq 0 ]]; then
-    log_success "Архив и части созданы: ${out_prefix}*"
+    log_success "Создано:"
+    ls -1 "${outdir}/${out_prefix}"* | sort | while read -r f; do
+      echo -e "  ${BLUE}$(basename "$f")${NC}"
+    done
   else
-    log_error "Ошибка при упаковке"
+    log_error "Ошибка при создании архива"
     return 1
   fi
 }
+
 
 unslice_and_unpack() {
   local slice_prefix="$1"
