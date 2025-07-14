@@ -1,6 +1,6 @@
 # Maintainer: Mykola Matvyeyev <mnasoft@gmail.com>
 pkgname=tar-xz-slicer
-pkgver=0.1
+pkgver=0.2
 pkgrel=1
 pkgdesc="CLI-утилита для упаковки каталогов в .tar.xz с нарезкой на слайсы и распаковкой без временных файлов"
 arch=('any')
